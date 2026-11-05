@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- burbuja de chat -->
+    <path android:pathData="M40,32 H68 A14,14 0 0 1 82,46 V60 A14,14 0 0 1 68,74 H52 L36,85 L40,74 A14,14 0 0 1 26,60 V46 A14,14 0 0 1 40,32 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="26"
+                android:startY="32"
+                android:endX="82"
+                android:endY="85"
+                android:type="linear">
+                <item android:color="#FFFF5A7A" android:offset="0.0" />
+                <item android:color="#FFE91E63" android:offset="0.55" />
+                <item android:color="#FFB5179E" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- señal "en vivo" -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,53 m-4.5,0 a4.5,4.5 0 1 0 9,0 a4.5,4.5 0 1 0 -9,0" />
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="3.4"
+        android:strokeLineCap="round"
+        android:pathData="M46.22,45.22 A11,11 0 0 0 46.22,60.78 M61.78,45.22 A11,11 0 0 1 61.78,60.78" />
+    <path
+        android:strokeColor="#99FFFFFF"
+        android:strokeWidth="3.4"
+        android:strokeLineCap="round"
+        android:pathData="M41.27,40.27 A18,18 0 0 0 41.27,65.73 M66.73,40.27 A18,18 0 0 1 66.73,65.73" />
+</vector>

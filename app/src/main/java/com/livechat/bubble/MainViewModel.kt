@@ -46,6 +46,11 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
     fun useCookie(cookie: String) {
         store.cookies = cookie
         reloadSession()
+        if (!store.loggedIn) {
+            _ui.update {
+                it.copy(status = "Esa cookie no sirve: tiene que incluir SAPISID o __Secure-3PAPISID. Copiá el header Cookie completo de youtube.com.")
+            }
+        }
     }
 
     fun refreshSubscriptions() {
