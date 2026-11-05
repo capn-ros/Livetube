@@ -79,7 +79,26 @@ jobs:
           gradle-version: 8.9
 
       - name: Compilar APK
-        run: gradle assembleDebug --no-daemon
+        run: |
+          set -o pipefail
+          gradle assembleDebug --no-daemon 2>&1 | tee build.log
+
+      - name: Resumen de errores
+        if: failure()
+        run: |
+          {
+            echo '### Errores de compilación'
+            echo '```'
+            grep -E '^e: |What went wrong|Execution failed|error:' -A4 build.log | head -100 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Subir log si falló
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
 
       - name: Renombrar APK
         run: cp app/build/outputs/apk/debug/app-debug.apk livetube.apk
