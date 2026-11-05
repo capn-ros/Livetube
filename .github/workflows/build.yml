@@ -1,0 +1,100 @@
+name: LiveTube - reemplazar repo y compilar APK
+
+on:
+  push:
+    paths:
+      - livetube.zip
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: livetube-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reemplazar el repo con livetube.zip
+        run: |
+          set -euo pipefail
+          if [ ! -f livetube.zip ]; then
+            echo "::error::No encuentro livetube.zip en la raíz del repo"
+            exit 1
+          fi
+
+          TMP="$(mktemp -d)"
+          unzip -q livetube.zip -d "$TMP"
+          rm -rf "$TMP/__MACOSX"
+
+          # si el zip trae todo dentro de una única carpeta, esa carpeta es la raíz
+          SRC="$TMP"
+          if [ "$(ls -A "$TMP" | wc -l)" -eq 1 ] && [ -d "$TMP/$(ls -A "$TMP")" ]; then
+            SRC="$TMP/$(ls -A "$TMP")"
+          fi
+
+          if [ ! -f "$SRC/settings.gradle.kts" ]; then
+            echo "::error::El zip no tiene settings.gradle.kts en la raíz"
+            exit 1
+          fi
+
+          # .git, .github (GitHub no deja que el workflow modifique workflows) y el zip no se tocan
+          rm -rf "$SRC/.git" "$SRC/.github" "$SRC/livetube.zip"
+          find . -mindepth 1 -maxdepth 1 \
+            ! -name .git ! -name .github ! -name livetube.zip \
+            -exec rm -rf {} +
+          cp -a "$SRC"/. .
+          echo "Repo reemplazado:"
+          ls -A
+
+      - name: Guardar el repo reemplazado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Sin cambios para guardar"
+          else
+            git commit -m "Reemplazar repo con livetube.zip"
+            git push
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+
+      - name: Compilar APK
+        run: gradle assembleDebug --no-daemon
+
+      - name: Renombrar APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk livetube.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: livetube-apk
+          path: livetube.apk
+
+      - name: Borrar artifacts viejos
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # todo artifact que no sea de esta corrida (el APK nuevo ya está subido)
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" \
+            --jq ".artifacts[] | select(.workflow_run.id != ${GITHUB_RUN_ID}) | .id" |
+          while read -r id; do
+            echo "Borrando artifact $id"
+            gh api -X DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}" --silent
+          done
