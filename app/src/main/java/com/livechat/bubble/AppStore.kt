@@ -9,15 +9,6 @@ class AppStore(ctx: Context) {
     private val sp = ctx.applicationContext.getSharedPreferences("lcb_data", Context.MODE_PRIVATE)
     private val legacy = ctx.applicationContext.getSharedPreferences("lcb_session", Context.MODE_PRIVATE)
 
-    init {
-        // migra la cookie en texto plano de la etapa 1
-        val old = legacy.getString("cookies", null)
-        if (!old.isNullOrEmpty()) {
-            cookies = old
-            legacy.edit().clear().apply()
-        }
-    }
-
     var cookies: String
         get() = sp.getString("cookies_enc", null)?.let { Crypto.decrypt(it) } ?: ""
         set(value) {
@@ -29,6 +20,15 @@ class AppStore(ctx: Context) {
                 sp.edit().putString("cookies_enc", Crypto.encrypt(clean)).apply()
             }
         }
+
+    init {
+        // migra la cookie en texto plano de la etapa 1
+        val old = legacy.getString("cookies", null)
+        if (!old.isNullOrEmpty()) {
+            cookies = old
+            legacy.edit().clear().apply()
+        }
+    }
 
     val loggedIn: Boolean get() = SapisidAuth.header(cookies) != null
 
