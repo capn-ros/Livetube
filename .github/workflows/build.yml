@@ -69,7 +69,10 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - uses: android-actions/setup-android@v3
+      # El runner ya trae el SDK de Android: solo se aceptan las licencias
+      # (setup-android@v3 falla ahora con "Failed to find package 'tools'").
+      - name: Aceptar licencias del SDK
+        run: yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
       - uses: gradle/actions/setup-gradle@v4
         with:
